@@ -50,7 +50,7 @@ const useScrollReveal = () => {
     const current = domRef.current;
     if (current) observer.observe(current);
     return () => {
-      if (current) observer.unobserve(current);
+      if (current) observer.unobser ve(current);
     };
   }, []);
 
