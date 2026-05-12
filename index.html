@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioNovaa | Food Systems Innovation Platform</title>
+    <title>BioNovAA | Food Systems Innovation Platform</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,11 +11,11 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Custom Styles for Animations -->
+    <!-- Custom Styles -->
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
         
-        /* Scroll Reveal Animation Classes */
+        /* Scroll Reveal Animation */
         .reveal {
             opacity: 0;
             transform: translateY(30px);
@@ -26,16 +26,67 @@
             transform: translateY(0);
         }
 
+        /* Active Nav Link Styles */
+        .active-link {
+            color: #4ade80 !important; /* green-400 */
+        }
+        .active-link .nav-underline {
+            width: 100% !important;
+        }
+
+        /* Logo Animation Styles */
+        .logo-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-wrapper:hover {
+            transform: scale(1.05) translateY(-2px);
+            filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.3));
+        }
+
+        /* The Shimmer Sweep Effect */
+        .logo-shimmer {
+            position: relative;
+        }
+
+        .logo-shimmer::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 20%;
+            height: 200%;
+            background: linear-gradient(
+                to right, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 4s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -60%; opacity: 0; }
+            10% { opacity: 1; }
+            30% { left: 140%; opacity: 1; }
+            31% { opacity: 0; }
+            100% { left: 140%; opacity: 0; }
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; } /* slate-900 */
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; } /* slate-700 */
-        ::-webkit-scrollbar-thumb:hover { background: #475569; } /* slate-600 */
+        ::-webkit-scrollbar-track { background: #0f172a; } 
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; } 
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-300 overflow-x-hidden">
 
-    <!-- --- Error Banner for Setup Issues (Hidden by default) --- -->
+    <!-- --- Error Banner for Setup Issues --- -->
     <div id="auth-error-banner" class="hidden fixed top-0 left-0 w-full bg-orange-600 text-white p-4 z-[100] shadow-lg transition-transform transform -translate-y-full duration-500">
         <div class="container mx-auto flex items-start gap-3">
             <i data-lucide="alert-triangle" class="flex-shrink-0 mt-1 w-6 h-6"></i>
@@ -49,950 +100,482 @@
         </div>
     </div>
 
-    <!-- ================= ARCHIVE OVERLAY ================= -->
-    <div id="gallery-overlay" class="fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur-sm overflow-y-auto hidden opacity-0 transition-opacity duration-300">
-        <div class="container mx-auto px-6 py-10">
-            <div class="flex justify-between items-center mb-12 sticky top-0 bg-slate-900/95 backdrop-blur-md py-6 border-b border-slate-800 z-10 shadow-sm rounded-b-2xl">
-                <div>
-                    <h2 class="text-3xl font-bold text-white">Ecosystem Archive</h2>
-                    <p class="text-slate-400 text-sm">Resources, media, and documents from our community.</p>
-                </div>
-                <button onclick="closeGallery()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-colors shadow-sm border border-slate-700">
-                    <i data-lucide="x" class="w-8 h-8"></i>
-                </button>
-            </div>
-
-            <!-- Upload Section -->
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-10 text-center mb-12 shadow-sm">
-                <div id="upload-icon-container" class="w-16 h-16 bg-slate-700 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="upload" class="w-8 h-8"></i>
-                </div>
-                <h3 class="text-xl font-bold text-white mb-2">Contribute to the Archive</h3>
-                <p class="text-slate-400 mb-6 max-w-md mx-auto">Upload pitch decks, presentations, photos, or videos.</p>
-                
-                <p id="upload-status" class="hidden bg-green-900/50 text-green-400 p-3 rounded-lg mb-4 text-sm font-medium"></p>
-
-                <div id="auth-warning" class="hidden bg-orange-900/50 border border-orange-700/50 text-orange-200 p-3 rounded-lg mb-4 text-sm inline-flex items-center gap-2">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                    <span>Uploads are disabled until authentication is configured.</span>
-                </div>
-
-                <div class="flex justify-center flex-col md:flex-row items-center gap-4 max-w-2xl mx-auto">
-                    <label id="upload-label" class="cursor-pointer w-full md:w-auto bg-green-500 hover:bg-green-600 text-white rounded-lg px-6 py-3 font-bold transition-colors flex items-center justify-center gap-2 shadow-sm">
-                        <i data-lucide="upload" class="w-5 h-5"></i>
-                        <span id="upload-btn-text">Select File (Max 15MB)</span>
-                        <input type="file" id="file-input" class="hidden" accept="image/*,video/mp4,video/webm,.pdf,.ppt,.pptx">
-                    </label>
-                    
-                    <div id="preview-container" class="hidden w-full flex-col md:flex-row items-center gap-4 transition-all duration-300 translate-y-2 opacity-0">
-                        <div class="w-24 h-24 bg-slate-900 border border-slate-700 shadow-sm rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center" id="preview-media-container">
-                            <img id="preview-img" class="w-full h-full object-cover hidden">
-                            <video id="preview-video" class="w-full h-full object-cover hidden" muted loop></video>
-                            <i id="preview-doc" data-lucide="file-text" class="w-8 h-8 text-green-400 hidden"></i>
-                        </div>
-                        <div class="flex flex-col gap-2 w-full">
-                            <input type="text" id="upload-title" placeholder="Resource Title (e.g. Innovator Pitch Deck)" class="w-full bg-slate-900 border border-slate-700 text-white px-4 py-2.5 rounded-lg outline-none focus:border-green-500">
-                            <div class="flex gap-2">
-                                <button id="confirm-upload-btn" onclick="uploadFile()" class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg font-bold shadow-sm hover:bg-green-600 transition-colors">Upload</button>
-                                <button onclick="cancelPreview()" class="px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg hover:bg-slate-600 transition-colors shadow-sm">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-slate-500 text-xs mt-4">Supported formats: Pictures, Videos, PDF, PPTs (Max 15MB).</p>
-            </div>
-
-            <!-- Filters -->
-            <div class="flex flex-wrap justify-center gap-3 mb-8">
-                <button onclick="filterArchive('all')" id="filter-all" class="archive-filter bg-green-500 border border-transparent text-white px-5 py-2 rounded-full font-bold transition-colors">All</button>
-                <button onclick="filterArchive('video')" id="filter-video" class="archive-filter bg-transparent border border-slate-700 text-slate-300 hover:border-green-500 hover:text-white px-5 py-2 rounded-full font-medium transition-colors">Videos</button>
-                <button onclick="filterArchive('image')" id="filter-image" class="archive-filter bg-transparent border border-slate-700 text-slate-300 hover:border-green-500 hover:text-white px-5 py-2 rounded-full font-medium transition-colors">Pictures</button>
-                <button onclick="filterArchive('pdf')" id="filter-pdf" class="archive-filter bg-transparent border border-slate-700 text-slate-300 hover:border-green-500 hover:text-white px-5 py-2 rounded-full font-medium transition-colors">PDF</button>
-                <button onclick="filterArchive('ppt')" id="filter-ppt" class="archive-filter bg-transparent border border-slate-700 text-slate-300 hover:border-green-500 hover:text-white px-5 py-2 rounded-full font-medium transition-colors">PPTs</button>
-            </div>
-
-            <!-- Real Gallery Grid from Firebase -->
-            <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[250px] pb-12">
-                <!-- Items injected by JS -->
-            </div>
-
-            <div class="text-center pb-10">
-                <button onclick="closeGallery()" class="px-8 py-3 bg-slate-800 text-white border border-slate-700 rounded-lg font-bold hover:bg-slate-700 transition-colors shadow-sm">
-                    Close Archive
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- ================= NAVIGATION ================= -->
-    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 py-5 bg-transparent border-b border-transparent">
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 py-5 bg-slate-900/95 backdrop-blur-md">
         <div class="container mx-auto px-6 flex justify-between items-center">
             
-            <!-- Logo Container -->
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
-                <div id="logo-container" class="transition-all duration-300 px-3 py-1.5 rounded-lg bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-center">
-                    <img src="BIONOVAA.jpg" alt="BioNovaa Logo" class="h-10 md:h-12 w-auto object-contain" id="logo-img" onerror="this.style.display='none'; document.getElementById('logo-text-fallback').classList.remove('hidden'); document.getElementById('logo-text-fallback').classList.add('flex');">
-                    <div id="logo-text-fallback" class="hidden items-center gap-1">
-                        <i data-lucide="dna" class="text-blue-900 w-6 h-6"></i>
-                        <span class="text-xl md:text-2xl font-bold tracking-tight leading-none text-blue-900">Bio<span class="text-green-500">Novaa</span></span>
-                    </div>
+            <!-- Animated Logo -->
+            <div class="flex items-center cursor-pointer group" onclick="window.scrollTo(0,0)">
+                <div class="logo-wrapper logo-shimmer">
+                    <img src="image_edccdc.jpg" alt="BioNovAA Logo" class="h-12 md:h-16 w-auto object-contain" />
                 </div>
             </div>
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center space-x-8">
-                <a href="#about" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#about" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">About</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <a href="#problem" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#problem" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">The Challenge</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <a href="#approach" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#approach" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">Approach</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <a href="#programs" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#programs" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">Programs</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <a href="#events" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#events" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">Events</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <a href="#partners" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <a href="#partners" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">Partners</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </a>
-                <button onclick="openGallery()" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors hover:text-white">
+                <button onclick="openGallery()" class="nav-link font-medium relative group py-2 text-slate-200 transition-colors">
                     <span class="relative z-10">Archive</span>
-                    <span class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
+                    <div class="nav-underline absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300"></div>
                 </button>
-                
-                <a href="#contact" class="px-6 py-2.5 rounded-full font-semibold transition-colors shadow-sm flex items-center gap-2 bg-green-500 text-white hover:bg-green-600" id="nav-btn">
-                    Join the Movement <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </a>
             </div>
 
-            <!-- Mobile Menu Button -->
-            <button id="mobile-menu-btn" class="md:hidden focus:outline-none p-2 rounded-md transition-colors text-white hover:bg-slate-800">
+            <button id="mobile-menu-btn" class="md:hidden text-white p-2">
                 <i data-lucide="menu" class="w-7 h-7" id="menu-icon"></i>
             </button>
         </div>
 
-        <!-- Mobile Menu Dropdown -->
-        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-slate-900 shadow-xl border-t border-slate-800 py-4 px-6 flex flex-col space-y-4 transition-all duration-300 origin-top transform scale-y-0">
-            <a href="#about" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">About</a>
-            <a href="#problem" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">The Challenge</a>
-            <a href="#approach" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">Approach</a>
-            <a href="#programs" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">Programs</a>
-            <a href="#events" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">Events</a>
-            <a href="#partners" class="mobile-link text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">Partners</a>
-            <button onclick="openGallery(); closeMobileMenu();" class="text-left text-slate-200 font-medium hover:text-green-400 hover:bg-slate-800 py-3 px-2 rounded-lg transition-colors cursor-pointer">Archive</button>
-            <a href="#contact" onclick="closeMobileMenu()" class="text-center w-full py-3 bg-green-500 hover:bg-green-600 transition-colors text-white rounded-lg font-bold shadow-sm">Join the Movement</a>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-slate-900 shadow-xl py-4 px-6 flex flex-col space-y-4">
+            <a href="#about" class="text-slate-200 font-medium py-2">About</a>
+            <a href="#problem" class="text-slate-200 font-medium py-2">Challenge</a>
+            <a href="#approach" class="text-slate-200 font-medium py-2">Approach</a>
+            <a href="#programs" class="text-slate-200 font-medium py-2">Programs</a>
+            <a href="#events" class="text-slate-200 font-medium py-2">Events</a>
+            <a href="#partners" class="text-slate-200 font-medium py-2">Partners</a>
+            <button onclick="openGallery()" class="text-left text-slate-200 font-medium py-2">Archive</button>
+            <a href="#contact" class="bg-green-500 text-white text-center py-3 rounded-lg font-bold">Join the Movement</a>
         </div>
     </nav>
 
     <!-- ================= HERO SECTION ================= -->
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-slate-900">
-        <!-- Background -->
+    <section class="relative pt-48 pb-32 overflow-hidden">
         <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1516253564287-947867563886?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Sustainable Innovation" class="w-full h-full object-cover opacity-20" />
+            <img src="https://images.unsplash.com/photo-1516253564287-947867563886?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Innovation" class="w-full h-full object-cover opacity-20" />
             <div class="absolute inset-0 bg-gradient-to-b from-slate-900/80 to-slate-900"></div>
         </div>
 
         <div class="container mx-auto px-6 relative z-10 flex flex-col items-center text-center">
             <div class="max-w-4xl reveal">
-                <div class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-green-400 text-xs font-bold tracking-wide uppercase shadow-sm mb-6">
+                <div class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-green-400 text-xs font-bold tracking-wide uppercase mb-6">
                     <i data-lucide="target" class="w-3.5 h-3.5"></i> Food Systems Innovation Platform
                 </div>
-                
                 <h1 class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
                     Building Africa’s <br />
                     <span class="text-green-400">Food Systems Future</span>
                 </h1>
-                
-                <p class="text-lg lg:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto">
+                <p class="text-lg lg:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto font-light">
                     We are an innovation platform discovering, supporting, and scaling solutions for Africa’s most critical food system challenges.
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- ================= WHAT IS BIONOVAA (ABOUT) ================= -->
-    <section id="about" class="py-24 bg-slate-900 relative">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="max-w-4xl mx-auto text-center mb-16 reveal">
+    <!-- ================= WHO WE ARE (ABOUT) ================= -->
+    <section id="about" class="py-24">
+        <div class="container mx-auto px-6 text-center">
+            <div class="max-w-4xl mx-auto reveal">
                 <h2 class="text-green-400 font-bold text-sm uppercase tracking-widest mb-4">Who We Are</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-8 leading-tight">An Ecosystem Built to Scale Impact.</h3>
+                <h3 class="text-3xl md:text-5xl font-bold text-white mb-8">An Ecosystem Built to Scale Impact.</h3>
                 <p class="text-slate-300 mb-6 text-xl leading-relaxed">
-                    BioNovaa is a food systems innovation platform focused on discovering, developing, and supporting solutions that improve how Africa produces, distributes, and consumes food.
+                    BioNovAA is a food systems innovation platform focused on discovering, developing, and supporting solutions that improve how Africa produces, distributes, and consumes food.
                 </p>
-                <p class="text-slate-300 mb-10 text-xl leading-relaxed">
-                    We exist to turn ideas into real solutions that impact real food systems, operating at the powerful intersection of:
-                </p>
-                <div class="flex flex-wrap justify-center gap-4">
-                    <span class="text-lg font-bold text-white">Innovation &bull;</span>
-                    <span class="text-lg font-bold text-white">Entrepreneurship &bull;</span>
-                    <span class="text-lg font-bold text-white">Research &bull;</span>
-                    <span class="text-lg font-bold text-white">Technology &bull;</span>
-                    <span class="text-lg font-bold text-white">Sustainability &bull;</span>
-                    <span class="text-lg font-bold text-white">Collaboration</span>
+                <div class="flex flex-wrap justify-center gap-4 text-white font-bold text-lg">
+                    <span>Innovation &bull;</span>
+                    <span>Entrepreneurship &bull;</span>
+                    <span>Research &bull;</span>
+                    <span>Technology &bull;</span>
+                    <span>Sustainability &bull;</span>
+                    <span>Collaboration</span>
                 </div>
             </div>
-
-            <!-- Vision & Mission -->
-            <div class="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto mt-20">
-                <div class="reveal text-center">
+            
+            <div class="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto mt-20 reveal">
+                <div class="text-center">
                     <div class="w-16 h-16 mx-auto text-green-400 mb-6 flex items-center justify-center"><i data-lucide="globe" class="w-10 h-10"></i></div>
                     <h4 class="text-2xl font-bold text-white mb-4">Our Vision</h4>
                     <p class="text-slate-300 text-lg">A future where Africa’s food systems are resilient, sustainable, and innovation-driven.</p>
                 </div>
-                <div class="reveal text-center">
+                <div class="text-center">
                     <div class="w-16 h-16 mx-auto text-green-400 mb-6 flex items-center justify-center"><i data-lucide="target" class="w-10 h-10"></i></div>
                     <h4 class="text-2xl font-bold text-white mb-4">Our Mission</h4>
                     <p class="text-slate-300 text-lg">To discover, support, and scale innovation that improves Africa’s food systems.</p>
                 </div>
             </div>
 
-            <!-- Founder's Perspective -->
-            <div class="mt-32 max-w-4xl mx-auto border-t border-slate-800 pt-20 reveal">
-                <div class="w-16 h-16 mx-auto text-green-400 mb-8 flex items-center justify-center"><i data-lucide="quote" class="w-10 h-10"></i></div>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-8 text-center leading-tight">A shift is possible. BioNovaa was created as part of that shift.</h3>
-                <p class="text-green-400 font-bold tracking-widest uppercase text-sm text-center mb-12">Founder's Perspective</p>
-                
-                <div class="text-slate-300 text-lg md:text-xl leading-relaxed space-y-6 font-light">
-                    <p>BioNovaa began from a personal conviction. As someone standing at the intersection of food science, technology, software engineering, and data analysis, I have seen both the depth of the problems and the scale of the opportunity.</p>
-                    <p>I am still learning. I am still building. I am still figuring things out. But I am certain of one thing:</p>
-                    <p class="text-2xl md:text-3xl text-white font-bold leading-relaxed border-l-4 border-green-400 pl-6 my-10">Africa’s food systems will not transform by accident. They will transform because people choose to build the systems that enable change.</p>
-                    <p>BioNovaa is one of those systems. It is not built all at once. It is being built step by step, through experimentation, learning, and continuous improvement.</p>
-                    <p>This is not just a project. <strong class="text-white font-semibold">It is infrastructure in progress.</strong></p>
+            <div id="impact-goals" class="mt-24 max-w-5xl mx-auto pt-20">
+                <h3 class="text-2xl md:text-3xl font-bold text-white mb-12">Our Impact Goals</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div>
+                        <div class="text-4xl md:text-5xl font-bold text-green-400 mb-2 counter" data-target="500">0</div>
+                        <p class="text-slate-400 text-sm">Innovators Empowered</p>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-bold text-green-400 mb-2 counter" data-target="15">0</div>
+                        <p class="text-slate-400 text-sm">African Countries</p>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-bold text-green-400 mb-2 counter" data-target="50">0</div>
+                        <p class="text-slate-400 text-sm">Solutions Scaled</p>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-bold text-green-400 mb-2 counter" data-target="20">0</div>
+                        <p class="text-slate-400 text-sm">Ecosystem Partners</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ================= THE PROBLEM ================= -->
-    <section id="problem" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
+    <section id="problem" class="py-24">
+        <div class="container mx-auto px-6 text-center">
             <div class="text-center max-w-3xl mx-auto mb-16 reveal">
-                <h2 class="text-slate-400 font-bold tracking-widest uppercase mb-4">The Challenge</h2>
+                <h2 class="text-slate-500 font-bold tracking-widest uppercase mb-4">The Challenge</h2>
                 <h3 class="text-3xl md:text-4xl font-bold text-white mb-6">Africa’s Food Systems Face Structural Challenges</h3>
                 <p class="text-slate-300 text-lg">Across production, processing, distribution, nutrition, and sustainability, key gaps persist in the ecosystem.</p>
             </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto mb-20 text-center md:text-left">
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Post-harvest losses</span>
-                </div>
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Limited value addition</span>
-                </div>
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Weak market linkages</span>
-                </div>
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Low adoption of innovation</span>
-                </div>
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Fragmented ecosystems</span>
-                </div>
-                <div class="reveal flex flex-col md:flex-row items-center md:items-start gap-4">
-                    <div class="text-red-500 flex-shrink-0"><i data-lucide="alert-circle" class="w-6 h-6"></i></div>
-                    <span class="font-semibold text-slate-200 text-lg">Limited early-stage support</span>
-                </div>
-            </div>
-
-            <div class="reveal max-w-4xl mx-auto text-center">
-                <h4 class="text-xl md:text-2xl font-bold text-white mb-4">Yet, Africa has the talent, ideas, and potential.</h4>
-                <p class="text-slate-300 text-lg">
-                    What’s missing is structured support to discover and scale solutions. <br class="hidden md:block"/>
-                    <span class="font-bold text-green-400">That is where BioNovaa comes in.</span>
-                </p>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto text-center md:text-left">
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Post-harvest losses</span></div>
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Limited value addition</span></div>
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Weak market linkages</span></div>
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Low adoption of innovation</span></div>
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Fragmented ecosystems</span></div>
+                <div class="reveal flex items-center gap-4"><i data-lucide="alert-circle" class="text-red-500 w-6 h-6"></i><span class="text-lg">Limited early-stage support</span></div>
             </div>
         </div>
     </section>
 
     <!-- ================= OUR APPROACH ================= -->
-    <section id="approach" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+    <section id="approach" class="py-24">
+        <div class="container mx-auto px-6 text-center">
+            <div class="reveal mb-16 max-w-3xl mx-auto">
                 <h2 class="text-green-400 font-bold tracking-widest uppercase mb-4">Our Approach</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Four Pillars of Transformation</h3>
-                <p class="text-slate-300 text-lg">BioNovaa focuses on a structured pipeline to turn potential into impact.</p>
+                <h3 class="text-3xl md:text-5xl font-bold text-white mb-8">Building a Scalable Innovation Pipeline</h3>
+                <p class="text-slate-300 text-lg leading-relaxed">
+                    BioNovAA focuses on execution through a structured pathway that helps ideas move from concept to real-world implementation.
+                </p>
             </div>
-
-            <div class="grid md:grid-cols-2 gap-16 max-w-5xl mx-auto">
-                <div class="reveal">
-                    <div class="text-green-400 mb-4"><i data-lucide="search" class="w-10 h-10"></i></div>
-                    <h4 class="text-2xl font-bold text-white mb-4">1. Discover</h4>
-                    <p class="text-slate-300 leading-relaxed text-lg">We identify emerging innovators, ideas, and opportunities across Africa’s food systems through innovation challenges and open calls.</p>
+            
+            <div class="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+                <div class="reveal text-left">
+                    <h4 class="text-xl font-bold text-white mb-4">1. Discover</h4>
+                    <p class="text-slate-400">Identifying emerging innovators, ideas, and opportunities through challenges and open calls.</p>
                 </div>
-                <div class="reveal">
-                    <div class="text-green-400 mb-4"><i data-lucide="trending-up" class="w-10 h-10"></i></div>
-                    <h4 class="text-2xl font-bold text-white mb-4">2. Develop</h4>
-                    <p class="text-slate-300 leading-relaxed text-lg">We support innovators through mentorship, exposure, and structured guidance, connecting them with experts to strengthen their ideas.</p>
+                <div class="reveal text-left">
+                    <h4 class="text-xl font-bold text-white mb-4">2. Develop</h4>
+                    <p class="text-slate-400">Supporting innovators through mentorship and connecting them with industry experts.</p>
                 </div>
-                <div class="reveal">
-                    <div class="text-green-400 mb-4"><i data-lucide="shield-check" class="w-10 h-10"></i></div>
-                    <h4 class="text-2xl font-bold text-white mb-4">3. Support</h4>
-                    <p class="text-slate-300 leading-relaxed text-lg">We help promising solutions move beyond ideas toward real implementation via ecosystem connections and long-term support pathways.</p>
+                <div class="reveal text-left">
+                    <h4 class="text-xl font-bold text-white mb-4">3. Support</h4>
+                    <p class="text-slate-400">Moving beyond ideas toward real implementation via ecosystem connections and long-term support.</p>
                 </div>
-                <div class="reveal">
-                    <div class="text-green-400 mb-4"><i data-lucide="network" class="w-10 h-10"></i></div>
-                    <h4 class="text-2xl font-bold text-white mb-4">4. Build Ecosystem</h4>
-                    <p class="text-slate-300 leading-relaxed text-lg">We bring together innovators, experts, institutions, and partners to strengthen the innovation landscape. BioNovaa serves as a catalyst.</p>
+                <div class="reveal text-left">
+                    <h4 class="text-xl font-bold text-white mb-4">4. Build Ecosystem</h4>
+                    <p class="text-slate-400">Bringing together innovators, researchers, and partners to strengthen the landscape.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ================= EDITION 1 RESULTS (IMPACT) ================= -->
-    <section id="impact" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="text-center max-w-4xl mx-auto mb-16 reveal">
-                <h2 class="text-green-400 font-bold tracking-widest uppercase mb-4">Validating the Model</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Edition 1 Results</h3>
-                <p class="text-slate-300 text-lg leading-relaxed">
-                    BioNovaa hosted its first virtual innovation challenge in November 2025. Despite having no funding and operating fully online, the results were meaningful.
+    <!-- ================= OUR PROGRAMS ================= -->
+    <section id="programs" class="py-24">
+        <div class="container mx-auto px-6 text-center">
+            <div class="reveal mb-16 text-center max-w-2xl mx-auto">
+                <h2 class="text-green-400 font-bold tracking-widest uppercase mb-4">Our Programs</h2>
+                <h3 class="text-3xl md:text-5xl font-bold text-white">Our Call to Action</h3>
+            </div>
+            
+            <div class="max-w-4xl mx-auto reveal">
+                <div class="inline-flex items-center gap-2 text-green-400 font-bold uppercase tracking-wide mb-4">
+                    <i data-lucide="trophy" class="w-6 h-6"></i> Flagship Program
+                </div>
+                <h4 class="text-3xl font-bold text-white mb-6">BioNovAA Food Systems Innovation Challenge</h4>
+                <p class="text-slate-300 text-lg mb-10 leading-relaxed">
+                    A structured innovation challenge identifying and supporting promising food systems solutions. 
+                    The challenge connects innovators to opportunities for immense growth.
                 </p>
-            </div>
-
-            <div id="stats-container" class="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-16 max-w-5xl mx-auto text-center mb-20">
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="74">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Innovators Registered</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="36">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Active Participants</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="18">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Experts Engaged</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="5">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Mentors Deployed</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="3">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Judges Evaluated</p>
-                </div>
-                <div class="reveal">
-                    <div class="text-5xl md:text-7xl font-bold text-white mb-2"><span class="counter" data-target="1">0</span></div>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-sm">Ecosystem Partner</p>
-                </div>
-            </div>
-
-            <div class="reveal text-center max-w-3xl mx-auto">
-                <h4 class="text-2xl font-bold text-white mb-6">This validated something important:</h4>
-                <div class="flex flex-col md:flex-row justify-center items-center gap-4 text-xl text-green-400 font-bold">
-                    <span>The interest exists.</span>
-                    <span class="hidden md:block">&bull;</span>
-                    <span>The talent exists.</span>
-                    <span class="hidden md:block">&bull;</span>
-                    <span>The ideas exist.</span>
-                </div>
-                <p class="mt-8 text-slate-300 text-lg">What is needed now is continuity.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ================= PROGRAMS & BEYOND ================= -->
-    <section id="programs" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="reveal mb-20 text-center max-w-3xl mx-auto">
-                <h2 class="text-green-400 font-bold tracking-widest uppercase mb-4">Continuous Innovation</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Sustaining the Momentum</h3>
-                <p class="text-slate-300 text-lg leading-relaxed">
-                    Innovation doesn't stop at ideation. BioNovaa provides a suite of continuous programs designed to nurture, validate, and scale emerging solutions.
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
-                <div class="reveal">
-                    <i data-lucide="flask-conical" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Innovation Sprint Labs</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Short, structured sessions where teams refine ideas, validate assumptions, and improve feasibility.</p>
-                </div>
-                <div class="reveal">
-                    <i data-lucide="arrow-up-right" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Continuation Support</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Helping teams continue development instead of stopping at early ideation.</p>
-                </div>
-                <div class="reveal">
-                    <i data-lucide="messages-square" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Debate Series</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Structured discussions exploring critical food systems questions, bringing together innovators and experts.</p>
-                </div>
-                <div class="reveal">
-                    <i data-lucide="search-check" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Review & Feedback</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Providing direct, actionable feedback from experienced mentors and practitioners.</p>
-                </div>
-                <div class="reveal">
-                    <i data-lucide="users" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Founder Check-Ins</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Supporting innovators continuously through the tough early stages of development.</p>
-                </div>
-                <div class="reveal">
-                    <i data-lucide="book-open" class="w-8 h-8 text-green-400 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-white mb-3">Knowledge Sessions</h4>
-                    <p class="text-slate-300 text-lg leading-relaxed">Sharing practical insights on building solutions within real food systems constraints.</p>
-                </div>
+                <div class="text-2xl font-black text-green-400 uppercase tracking-tighter mb-10 text-center">Tackling Africa's Food System</div>
+                <button onclick="openGallery()" class="text-white border-b-2 border-green-500 font-bold hover:text-green-400 transition-colors mx-auto block">View Challenge Highlights</button>
             </div>
         </div>
     </section>
 
     <!-- ================= UPCOMING EVENTS ================= -->
-    <section id="events" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="text-center max-w-3xl mx-auto reveal">
-                <h2 class="text-slate-400 font-bold tracking-widest uppercase mb-4">Upcoming Events</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Join the Next Wave</h3>
-                <div class="mt-12 p-12 border border-dashed border-slate-700 rounded-3xl flex flex-col items-center justify-center bg-slate-800/20">
-                    <i data-lucide="calendar-clock" class="w-16 h-16 text-slate-600 mb-6"></i>
-                    <h4 class="text-2xl font-bold text-slate-300 mb-3">No Upcoming Events Currently</h4>
-                    <p class="text-slate-500 text-lg max-w-xl mx-auto">We are actively planning our next phase of challenges, labs, and community events. Join our network to be the first to know when registrations open.</p>
+    <section id="events" class="py-24">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-slate-500 font-bold tracking-widest uppercase mb-4">Upcoming Events</h2>
+            <div class="mt-12 p-20 border border-dashed border-slate-800 rounded-3xl flex items-center justify-center text-slate-700 italic">
+                No upcoming events currently. Join our community to be the first to know.
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= ECOSYSTEM ARCHIVE ================= -->
+    <div id="gallery-overlay" class="fixed inset-0 z-[60] bg-slate-900/98 backdrop-blur-md overflow-y-auto hidden opacity-0 transition-opacity duration-300">
+        <div class="container mx-auto px-6 py-10">
+            <div class="flex justify-between items-center mb-12 sticky top-0 bg-slate-900 py-6 z-10">
+                <h2 class="text-3xl font-bold text-white">Ecosystem Archive</h2>
+                <button onclick="closeGallery()" class="p-2 text-white hover:text-green-400"><i data-lucide="x" class="w-8 h-8"></i></button>
+            </div>
+
+            <!-- Upload Panel -->
+            <div class="bg-slate-800/50 p-10 rounded-2xl mb-12 text-center">
+                <h3 class="text-xl font-bold text-white mb-4">Contribute to the Archive</h3>
+                <p id="upload-status" class="hidden text-green-400 font-bold mb-4"></p>
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4">
+                    <label id="upload-label" class="cursor-pointer bg-green-500 px-8 py-3 text-white font-bold rounded-lg hover:bg-green-600 transition-colors">
+                        Select File (Image, Video, PDF, PPT)
+                        <input type="file" id="file-input" class="hidden" accept="image/*,video/*,.pdf,.ppt,.pptx">
+                    </label>
+                    <div id="preview-container" class="hidden items-center gap-4">
+                        <input type="text" id="upload-title" placeholder="Resource Title" class="bg-slate-900 border border-slate-700 px-4 py-3 rounded text-white outline-none">
+                        <button onclick="uploadFile()" id="confirm-upload-btn" class="bg-blue-600 px-6 py-3 text-white font-bold rounded">Upload</button>
+                        <button onclick="cancelPreview()" class="text-slate-400 hover:text-white">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex flex-wrap justify-center gap-4 mb-10">
+                <button onclick="filterArchive('all')" class="filter-btn active bg-green-500 text-white px-6 py-2 rounded-full">All</button>
+                <button onclick="filterArchive('video')" class="filter-btn border border-slate-700 text-slate-400 px-6 py-2 rounded-full">Videos</button>
+                <button onclick="filterArchive('image')" class="filter-btn border border-slate-700 text-slate-400 px-6 py-2 rounded-full">Pictures</button>
+                <button onclick="filterArchive('pdf')" class="filter-btn border border-slate-700 text-slate-400 px-6 py-2 rounded-full">PDF</button>
+                <button onclick="filterArchive('ppt')" class="filter-btn border border-slate-700 text-slate-400 px-6 py-2 rounded-full">PPTs</button>
+            </div>
+
+            <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
+                <!-- Data from Firebase -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PARTNERS ================= -->
+    <section id="partners" class="py-24">
+        <div class="container mx-auto px-6 text-center">
+            <h3 class="text-2xl font-bold text-white mb-10 uppercase tracking-widest">Our Strategic Partner</h3>
+            <div class="flex justify-center">
+                <div class="flex flex-col items-center">
+                    <div class="w-48 h-48 mb-6 flex items-center justify-center bg-white rounded-2xl p-4">
+                        <img src="FTS.jpg" alt="Food Technologist Society Logo" class="max-w-full max-h-full object-contain" />
+                    </div>
+                    <h4 class="font-bold text-white text-xl mb-1 text-center font-black">Food Technologist Society</h4>
+                    <p class="text-slate-400 font-medium">(FTSK)</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ================= MANIFESTO ================= -->
-    <section class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 text-center relative z-10">
-            <div class="max-w-4xl mx-auto reveal">
-                <h2 class="text-3xl md:text-5xl font-bold text-white mb-8 leading-tight">
-                    We build infrastructure, not just events.
-                </h2>
-                <p class="text-xl md:text-2xl text-slate-400 mb-16 font-light">We are building something slower, deeper, and more intentional.</p>
-                
-                <div class="grid md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto text-lg md:text-xl font-medium text-white mb-20">
-                    <div class="flex items-center gap-4">
-                        <i data-lucide="check" class="text-green-400 w-6 h-6 flex-shrink-0"></i> Execution, not just ideas.
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <i data-lucide="check" class="text-green-400 w-6 h-6 flex-shrink-0"></i> Continuity, not just events.
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <i data-lucide="check" class="text-green-400 w-6 h-6 flex-shrink-0"></i> Infrastructure, not just programs.
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <i data-lucide="check" class="text-green-400 w-6 h-6 flex-shrink-0"></i> Real-world impact, not just participation.
-                    </div>
-                </div>
-
-                <p class="text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-                    This is a long-term effort. It is being built without funding, without large institutional backing, and without guarantees. <br class="hidden md:block"/>
-                    <strong class="text-white mt-6 block">But it is being built with clarity, conviction, and commitment.</strong>
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ================= FOCUS AREAS ================= -->
-    <section id="focus" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="reveal text-center max-w-3xl mx-auto">
-                <h2 class="text-slate-400 font-bold tracking-widest uppercase mb-4">Our Focus Area</h2>
-                <h3 class="text-3xl md:text-5xl font-bold text-white mb-6">Tackling Africa's Food System</h3>
-                <p class="text-slate-300 text-lg leading-relaxed">We focus our efforts entirely on transforming the African food system from the ground up—discovering, supporting, and scaling solutions that make a real difference across the continent's entire value chain.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ================= PARTNERS & WHO SHOULD JOIN ================= -->
-    <section id="partners" class="py-24 bg-slate-900 relative border-t border-slate-800">
-        <div class="container mx-auto px-6 relative z-10">
-            <div class="grid lg:grid-cols-2 gap-16 mb-24">
-                <div class="reveal">
-                    <h2 class="text-slate-400 font-bold tracking-widest uppercase mb-4">Who Should Join</h2>
-                    <h3 class="text-3xl font-bold text-white mb-6">Built for Problem Solvers</h3>
-                    <p class="text-slate-300 mb-8 text-lg">Anyone interested in improving food systems can be part of BioNovaa. We actively seek out:</p>
-                    <p class="text-white font-medium text-lg leading-relaxed">
-                        Innovators, Students, Entrepreneurs, Researchers, Developers, Designers, Professionals, and Ecosystem Partners.
-                    </p>
-                </div>
-
-                <div class="reveal">
-                    <h2 class="text-green-400 font-bold tracking-widest uppercase mb-4">Partner With Us</h2>
-                    <h3 class="text-3xl font-bold text-white mb-6">Multiply the Impact</h3>
-                    <p class="text-slate-300 mb-6 text-lg">As we grow, we are actively looking to build a network of organizations that share our vision. Partner with us to help strengthen impact and support future innovators. We are looking to collaborate with:</p>
-                    <ul class="space-y-4 text-lg text-slate-200">
-                        <li class="flex items-center gap-3 font-medium">
-                            <i data-lucide="check" class="w-5 h-5 text-green-400"></i> Innovation hubs & Universities
-                        </li>
-                        <li class="flex items-center gap-3 font-medium">
-                            <i data-lucide="check" class="w-5 h-5 text-green-400"></i> NGOs & Companies
-                        </li>
-                        <li class="flex items-center gap-3 font-medium">
-                            <i data-lucide="check" class="w-5 h-5 text-green-400"></i> Research institutions
-                        </li>
-                        <li class="flex items-center gap-3 font-medium">
-                            <i data-lucide="check" class="w-5 h-5 text-green-400"></i> Experts and mentors
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="reveal text-center mt-12">
-                <h3 class="text-2xl font-bold text-white mb-10">Our Founding Partner</h3>
-                <div class="flex justify-center">
-                    <div class="flex flex-col items-center">
-                        <div class="w-48 h-48 mb-6 flex items-center justify-center bg-white rounded-xl p-4 shadow-sm border border-slate-700">
-                            <img src="FTS.jpg" alt="Food Technologist Society Logo" class="max-w-full max-h-full object-contain" />
-                        </div>
-                        <h4 class="font-bold text-white text-xl mb-1 text-center">Food Technologist Society</h4>
-                        <div class="h-1 w-12 bg-green-400 rounded-full mb-3 mt-2"></div>
-                        <p class="text-slate-400 font-medium text-lg">(FTSK)</p>
-                        <p class="text-green-400 text-sm font-bold mt-4 uppercase tracking-widest">Strategic Partner</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ================= CALL TO ACTION ================= -->
-    <section id="contact" class="py-24 bg-slate-900 text-white relative overflow-visible border-t border-slate-800">
-        <div class="container mx-auto px-6 text-center relative z-20">
+    <!-- ================= JOIN CTAs ================= -->
+    <section id="contact" class="py-24">
+        <div class="container mx-auto px-6 text-center">
             <div class="reveal max-w-4xl mx-auto">
-                <h2 class="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">Join BioNovaa.</h2>
-                
-                <p class="text-slate-300 mb-12 text-xl leading-relaxed max-w-3xl mx-auto">
-                    Africa’s food systems hold immense potential, yet they remain fragmented. By joining BioNovaa, you plug into a powerful, continent-wide ecosystem of visionaries, experts, and funders. Don't just watch the future unfold—get the resources, high-level network, and platform you need to actively build and scale solutions that will feed generations.
-                </p>
+                <h2 class="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight">Join BioNovAA.</h2>
+                <p class="text-xl text-slate-300 mb-12">Africa’s food systems hold immense potential, yet they remain fragmented. Join our ecosystem to actively build and scale solutions.</p>
                 
                 <div class="flex flex-col md:flex-row justify-center items-center gap-6">
-                    
-                    <!-- Dropdown CTA Button -->
-                    <div class="relative group inline-block text-left w-full md:w-auto">
-                        <button class="w-full px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
-                            Join us to create impact <i data-lucide="chevron-down" class="w-5 h-5"></i>
-                        </button>
-                        
-                        <!-- Dropdown Menu -->
-                        <div class="absolute left-0 mt-2 w-full md:w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden text-left">
-                            <a href="mailto:bionnovaa@gmail.com?subject=Joining%20as%20a%20Judge" class="block px-5 py-3 text-white hover:bg-slate-700 transition-colors border-b border-slate-700">Join as a Judge</a>
-                            <a href="mailto:bionnovaa@gmail.com?subject=Joining%20as%20a%20Mentor" class="block px-5 py-3 text-white hover:bg-slate-700 transition-colors border-b border-slate-700">Join as a Mentor</a>
-                            <a href="mailto:bionnovaa@gmail.com?subject=Joining%20as%20a%20Partner" class="block px-5 py-3 text-white hover:bg-slate-700 transition-colors border-b border-slate-700">Join as a Partner</a>
-                            <a href="mailto:bionnovaa@gmail.com?subject=Joining%20as%20a%20Panelist" class="block px-5 py-3 text-white hover:bg-slate-700 transition-colors border-b border-slate-700">Join as a Panelist</a>
-                            <a href="mailto:bionnovaa@gmail.com?subject=Joining%20as%20an%20Innovator" class="block px-5 py-3 text-white hover:bg-slate-700 transition-colors">Join as an Innovator</a>
+                    <!-- Dropdown Join Button -->
+                    <div class="relative group">
+                        <button class="bg-green-500 px-10 py-5 text-white font-bold rounded-xl flex items-center gap-2">Join to Create Impact <i data-lucide="chevron-down"></i></button>
+                        <div class="absolute bottom-full mb-2 left-0 w-64 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-left z-50 shadow-2xl">
+                            <a href="mailto:bionnovaa@gmail.com?subject=Join as Judge" class="block px-6 py-3 hover:bg-slate-700 border-b border-slate-700">Join as a Judge</a>
+                            <a href="mailto:bionnovaa@gmail.com?subject=Join as Mentor" class="block px-6 py-3 hover:bg-slate-700 border-b border-slate-700">Join as a Mentor</a>
+                            <a href="mailto:bionnovaa@gmail.com?subject=Join as Partner" class="block px-5 py-3 hover:bg-slate-700 border-b border-slate-700">Join as a Partner</a>
+                            <a href="mailto:bionnovaa@gmail.com?subject=Join as Panelist" class="block px-6 py-3 hover:bg-slate-700 border-b border-slate-700">Join as a Panelist</a>
+                            <a href="mailto:bionnovaa@gmail.com?subject=Join as Innovator" class="block px-6 py-3 hover:bg-slate-700">Join as an Innovator</a>
                         </div>
                     </div>
-
                     <!-- WhatsApp Button -->
-                    <a href="https://whatsapp.com/channel/0029VbBVcfv0LKZKE9g9ZO3h" target="_blank" rel="noopener noreferrer" class="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                            Join our WhatsApp community
-                        </a>
-                    </div>
+                    <a href="https://whatsapp.com/channel/0029VbBVcfv0LKZKE9g9ZO3h" target="_blank" class="bg-blue-600 px-10 py-5 text-white font-bold rounded-xl shadow-lg flex items-center gap-2">
+                         Join our WhatsApp community
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ================= FOOTER ================= -->
-    <footer class="bg-slate-900 text-slate-500 py-12 border-t border-slate-800">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="mb-6 md:mb-0 text-center md:text-left">
-                    <div class="flex items-center gap-2 mb-2 justify-center md:justify-start">
-                        <img src="BIONOVAA.jpg" alt="BioNovaa Logo" class="h-10 w-auto object-contain rounded bg-white p-1" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="hidden items-center gap-1">
-                            <i data-lucide="dna" class="text-white w-6 h-6"></i>
-                            <span class="text-2xl font-bold tracking-tight leading-none text-white">Bio<span class="text-green-500">Novaa</span></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row gap-6 items-center text-sm font-medium">
-                    <a href="#about" class="hover:text-green-400 transition-colors">About</a>
-                    <a href="#programs" class="hover:text-green-400 transition-colors">Programs</a>
-                    <a href="#partners" class="hover:text-green-400 transition-colors">Partners</a>
-                    <a href="mailto:bionnovaa@gmail.com" class="hover:text-green-400 transition-colors px-4 py-2 bg-slate-800 border border-slate-700 rounded-full shadow-sm text-white">bionnovaa@gmail.com</a>
-                </div>
-
-                <div class="text-xs text-slate-500">&copy; <span id="year"></span> BioNovaa. All rights reserved.</div>
+    <footer class="bg-slate-900 text-slate-500 py-12">
+        <div class="container mx-auto px-6 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-8">
+            <img src="image_edccdc.jpg" alt="BioNovAA" class="h-10 w-auto">
+            <div class="flex gap-8 text-sm text-center">
+                <a href="#about" class="hover:text-green-400">About</a>
+                <a href="#programs" class="hover:text-green-400">Programs</a>
+                <a href="#partners" class="hover:text-green-400">Partners</a>
+                <a href="mailto:bionnovaa@gmail.com" class="hover:text-green-400">Contact</a>
             </div>
+            <p class="text-xs">&copy; 2025 BioNovAA. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- ================= SCRIPTS ================= -->
     <script type="module">
-        // --- 1. Initialize Icons & Year ---
         lucide.createIcons();
-        document.getElementById('year').textContent = new Date().getFullYear();
 
-        // --- 2. Scroll Logic (Navbar & Reveal) ---
-        const navbar = document.getElementById('navbar');
-        const mobileBtn = document.getElementById('mobile-menu-btn');
-        const menuIcon = document.getElementById('menu-icon');
-
-        window.addEventListener('scroll', () => {
-            const scrolled = window.scrollY > 50;
-            
-            if (scrolled) {
-                // Scrolled State (Dark theme handles this cleanly)
-                navbar.classList.remove('bg-transparent', 'py-5');
-                navbar.classList.add('bg-slate-900/95', 'backdrop-blur-md', 'shadow-sm', 'py-3');
-            } else {
-                // Top State
-                navbar.classList.add('bg-transparent', 'py-5');
-                navbar.classList.remove('bg-slate-900/95', 'backdrop-blur-md', 'shadow-sm', 'py-3');
-            }
-        });
-
-        // Scroll Reveal Observer
+        // Scroll Reveals
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('active');
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
         }, { threshold: 0.15 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        // --- Number Counter Animation Logic ---
-        const counters = document.querySelectorAll('.counter');
-        let animated = false;
-
-        const counterObserver = new IntersectionObserver((entries) => {
+        // Animated Counters
+        const counterObs = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting && !animated) {
-                    animated = true; 
-                    counters.forEach(counter => {
-                        const updateCount = () => {
-                            const target = +counter.getAttribute('data-target');
-                            const count = +counter.innerText;
-                            const speed = 100; // Lower is faster
-                            const inc = target / speed;
-
-                            if (count < target) {
-                                counter.innerText = Math.ceil(count + inc);
-                                setTimeout(updateCount, 30);
-                            } else {
-                                counter.innerText = target;
-                            }
+                if (entry.isIntersecting) {
+                    const counters = entry.target.querySelectorAll('.counter');
+                    counters.forEach(c => {
+                        const target = +c.dataset.target;
+                        const update = () => {
+                            const count = +c.innerText;
+                            const inc = target / 40;
+                            if (count < target) { c.innerText = Math.ceil(count + inc); setTimeout(update, 30); }
+                            else { c.innerText = target; }
                         };
-                        updateCount();
+                        update();
                     });
                 }
             });
-        }, { threshold: 0.5 }); // Triggers when 50% of the goals section is visible
+        }, { threshold: 0.5 });
+        counterObs.observe(document.getElementById('impact-goals'));
 
-        const statsContainer = document.getElementById('stats-container');
-        if (statsContainer) counterObserver.observe(statsContainer);
+        // Scroll Spy for Nav Highlights
+        window.addEventListener('scroll', () => {
+            const sections = ['about', 'problem', 'approach', 'programs', 'events', 'partners'];
+            let current = "";
+            sections.forEach(s => {
+                const el = document.getElementById(s);
+                if (el && window.pageYOffset >= el.offsetTop - 100) current = s;
+            });
+            document.querySelectorAll('.nav-link').forEach(l => {
+                l.classList.remove('active-link');
+                if (l.getAttribute('href') === `#${current}`) l.classList.add('active-link');
+            });
+        });
 
-        // --- 3. Mobile Menu Toggle ---
-        const mobileMenu = document.getElementById('mobile-menu');
-        let isMenuOpen = false;
-
-        mobileBtn.addEventListener('click', () => {
-            isMenuOpen = !isMenuOpen;
-            if (isMenuOpen) {
-                mobileMenu.classList.remove('hidden');
-                setTimeout(() => mobileMenu.classList.remove('scale-y-0'), 10);
-                menuIcon.setAttribute('data-lucide', 'x');
-            } else {
-                window.closeMobileMenu();
-            }
+        // Mobile Menu Toggle
+        const mBtn = document.getElementById('mobile-menu-btn');
+        const mMenu = document.getElementById('mobile-menu');
+        const mIcon = document.getElementById('menu-icon');
+        mBtn.addEventListener('click', () => {
+            mMenu.classList.toggle('hidden');
+            const isOpen = !mMenu.classList.contains('hidden');
+            mIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
             lucide.createIcons();
         });
 
-        window.closeMobileMenu = () => {
-            isMenuOpen = false;
-            mobileMenu.classList.add('scale-y-0');
-            setTimeout(() => mobileMenu.classList.add('hidden'), 300);
-            menuIcon.setAttribute('data-lucide', 'menu');
-            lucide.createIcons();
-        };
-
-        // --- 4. Gallery Logic ---
-        const galleryOverlay = document.getElementById('gallery-overlay');
-        
-        window.openGallery = () => {
-            galleryOverlay.classList.remove('hidden');
-            setTimeout(() => galleryOverlay.classList.remove('opacity-0'), 10);
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeGallery = () => {
-            galleryOverlay.classList.add('opacity-0');
-            setTimeout(() => {
-                galleryOverlay.classList.add('hidden');
-                document.body.style.overflow = 'unset';
-            }, 300);
-            window.cancelPreview();
-        };
-
-        let currentArchiveFilter = 'all';
-        let archiveItems = [];
-
-        window.filterArchive = (type) => {
-            currentArchiveFilter = type;
-            ['all', 'video', 'image', 'pdf', 'ppt'].forEach(t => {
-                const btn = document.getElementById(`filter-${t}`);
-                if(t === type) {
-                    btn.classList.add('bg-green-500', 'text-white', 'border-transparent');
-                    btn.classList.remove('border-slate-700', 'text-slate-300');
-                } else {
-                    btn.classList.remove('bg-green-500', 'text-white', 'border-transparent');
-                    btn.classList.add('border-slate-700', 'text-slate-300');
-                }
-            });
-            window.renderArchive();
-        };
-
-        window.renderArchive = () => {
-            const grid = document.getElementById('gallery-grid');
-            grid.innerHTML = '';
-            
-            const filtered = currentArchiveFilter === 'all' 
-                ? archiveItems 
-                : archiveItems.filter(i => i.type === currentArchiveFilter);
-
-            if (archiveItems.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500">No resources have been uploaded yet. Be the first to contribute!</div>`;
-            } else if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-500">No items found for this filter.</div>`;
-            } else {
-                filtered.forEach(item => {
-                    let mediaContent = '';
-                    let isDoc = false;
-                    let icon = '';
-
-                    if (item.type === 'video') {
-                        mediaContent = `<video controls class="absolute inset-0 w-full h-full object-cover"><source src="${item.url}" type="video/mp4"></video>`;
-                    } else if (item.type === 'image') {
-                        mediaContent = `<img src="${item.url}" alt="Archive Media" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">`;
-                    } else {
-                        isDoc = true;
-                        icon = item.type === 'pdf' ? 'file-text' : (item.type === 'ppt' ? 'presentation' : 'file');
-                        mediaContent = `<div class="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-800 text-green-400 group-hover:text-white transition-colors"><i data-lucide="${icon}" class="w-12 h-12 mb-4"></i><span class="text-sm font-bold px-4">View Document</span></div>`;
-                    }
-
-                    const wrapperStart = isDoc ? `<a href="${item.url}" target="_blank"` : `<div`;
-                    const wrapperEnd = isDoc ? `</a>` : `</div>`;
-
-                    grid.innerHTML += `
-                        ${wrapperStart} class="group relative overflow-hidden bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-center shadow-sm h-[250px] rounded-xl hover:border-green-500 transition-colors cursor-pointer">
-                            ${mediaContent}
-                            <div class="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none p-4">
-                                <p class="text-white font-bold tracking-wide">${item.title || 'Untitled'}</p>
-                            </div>
-                        ${wrapperEnd}
-                    `;
-                });
-            }
-            lucide.createIcons();
-        };
-
-        // --- 5. Firebase Setup ---
+        // Firebase logic
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuOcU7zDGjAjlmWQR_xaL8OyPsZylzprE",
-            authDomain: "bionovaa-9d942.firebaseapp.com",
-            projectId: "bionovaa-9d942",
-            storageBucket: "bionovaa-9d942.firebasestorage.app",
-            messagingSenderId: "747665072520",
-            appId: "1:747665072520:web:eef2e8d247205076491a3d"
+        const firebaseConfig = { apiKey: "AIzaSyAuOcU7zDGjAjlmWQR_xaL8OyPsZylzprE", authDomain: "bionovaa-9d942.firebaseapp.com", projectId: "bionovaa-9d942", storageBucket: "bionovaa-9d942.firebasestorage.app", messagingSenderId: "747665072520", appId: "1:747665072520:web:eef2e8d247205076491a3d" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        signInAnonymously(auth);
+
+        window.openGallery = () => { document.getElementById('gallery-overlay').classList.remove('hidden'); setTimeout(() => document.getElementById('gallery-overlay').classList.remove('opacity-0'), 10); document.body.style.overflow = 'hidden'; };
+        window.closeGallery = () => { document.getElementById('gallery-overlay').classList.add('opacity-0'); setTimeout(() => { document.getElementById('gallery-overlay').classList.add('hidden'); document.body.style.overflow = 'unset'; }, 300); };
+
+        let archiveItems = [];
+        onSnapshot(query(collection(db, 'gallery_items')), (snap) => {
+            archiveItems = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            window.renderArchive();
+        });
+
+        window.filterArchive = (type) => {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-green-500', 'text-white');
+                b.classList.add('border-slate-700', 'text-slate-400');
+                if (b.innerText.toLowerCase().includes(type) || (type === 'all' && b.innerText === 'All')) {
+                    b.classList.add('bg-green-500', 'text-white');
+                    b.classList.remove('border-slate-700', 'text-slate-400');
+                }
+            });
+            window.renderArchive(type);
         };
 
-        let app, auth, db, storage, currentUser = null;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            storage = getStorage(app);
-
-            // Auth Initialization
-            signInAnonymously(auth).catch(error => {
-                console.warn("Auth Setup Issue:", error.code);
-                const banner = document.getElementById('auth-error-banner');
-                if (error.code === 'auth/configuration-not-found' || error.code === 'auth/operation-not-allowed') {
-                    banner.classList.remove('hidden');
-                    setTimeout(() => banner.classList.remove('-translate-y-full'), 10);
-                }
+        window.renderArchive = (filter = 'all') => {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? archiveItems : archiveItems.filter(i => i.type === filter);
+            if (filtered.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-600 italic">No resources found in this category.</div>'; return; }
+            filtered.forEach(i => {
+                let media = '';
+                if (i.type === 'video') media = `<video controls class="absolute inset-0 w-full h-full object-cover"><source src="${i.url}"></video>`;
+                else if (i.type === 'image') media = `<img src="${i.url}" class="absolute inset-0 w-full h-full object-cover">`;
+                else media = `<div class="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-slate-800 text-green-400"><i data-lucide="${i.type === 'pdf' ? 'file-text' : 'presentation'}" class="w-12 h-12"></i><span class="mt-2 text-xs font-bold uppercase">${i.type}</span></div>`;
+                const wrap = i.type === 'image' || i.type === 'video' ? 'div' : 'a href="'+i.url+'" target="_blank"';
+                grid.innerHTML += `<${wrap} class="group relative overflow-hidden bg-slate-800 border border-slate-700 h-[250px] rounded-xl transition-all hover:border-green-400">
+                    ${media}
+                    <div class="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                        <p class="text-white font-bold text-center">${i.title}</p>
+                    </div>
+                </${wrap.split(' ')[0]}>`;
             });
+            lucide.createIcons();
+        };
 
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                const warning = document.getElementById('auth-warning');
-                const uploadLabel = document.getElementById('upload-label');
-                const fileInput = document.getElementById('file-input');
-                
-                if (!user) {
-                    warning.classList.remove('hidden');
-                    uploadLabel.classList.add('opacity-50', 'cursor-not-allowed');
-                    fileInput.disabled = true;
-                } else {
-                    warning.classList.add('hidden');
-                    uploadLabel.classList.remove('opacity-50', 'cursor-not-allowed');
-                    fileInput.disabled = false;
-                }
-            });
-
-            // Database Listener
-            const q = query(collection(db, 'gallery_items'));
-            onSnapshot(q, (snapshot) => {
-                archiveItems = [];
-                snapshot.forEach(doc => archiveItems.push({ id: doc.id, ...doc.data() }));
-                archiveItems.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                window.renderArchive();
-            });
-        } catch (e) { console.error("Firebase Init Error:", e); }
-
-        // --- 6. Upload Logic ---
-        const fileInput = document.getElementById('file-input');
-        const previewContainer = document.getElementById('preview-container');
-        const previewImg = document.getElementById('preview-img');
-        const previewVideo = document.getElementById('preview-video');
-        const previewDoc = document.getElementById('preview-doc');
-        const statusDiv = document.getElementById('upload-status');
-        const uploadLabel = document.getElementById('upload-label');
-        let selectedFile = null;
-
-        fileInput.addEventListener('change', (e) => {
+        const fIn = document.getElementById('file-input');
+        fIn.addEventListener('change', (e) => {
             if (e.target.files[0]) {
-                selectedFile = e.target.files[0];
-                const url = URL.createObjectURL(selectedFile);
-                
-                previewVideo.classList.add('hidden');
-                previewImg.classList.add('hidden');
-                previewDoc.classList.add('hidden');
-
-                if (selectedFile.type.startsWith('video/')) {
-                    previewVideo.src = url;
-                    previewVideo.classList.remove('hidden');
-                } else if (selectedFile.type.includes('pdf')) {
-                    previewDoc.classList.remove('hidden');
-                    previewDoc.setAttribute('data-lucide', 'file-text');
-                } else if (selectedFile.type.includes('presentation') || selectedFile.name.endsWith('.ppt') || selectedFile.name.endsWith('.pptx')) {
-                    previewDoc.classList.remove('hidden');
-                    previewDoc.setAttribute('data-lucide', 'presentation');
-                } else {
-                    previewImg.src = url;
-                    previewImg.classList.remove('hidden');
-                }
-                lucide.createIcons();
-                
-                uploadLabel.classList.add('hidden');
-                previewContainer.classList.remove('hidden');
-                previewContainer.classList.add('flex');
-                setTimeout(() => {
-                    previewContainer.classList.remove('opacity-0', 'translate-y-2');
-                }, 10);
+                document.getElementById('upload-label').classList.add('hidden');
+                document.getElementById('preview-container').classList.remove('hidden');
+                document.getElementById('preview-container').classList.add('flex');
             }
         });
 
-        window.cancelPreview = () => {
-            selectedFile = null;
-            fileInput.value = '';
-            document.getElementById('upload-title').value = '';
-            previewContainer.classList.add('opacity-0', 'translate-y-2');
-            setTimeout(() => {
-                previewContainer.classList.add('hidden');
-                previewContainer.classList.remove('flex');
-                uploadLabel.classList.remove('hidden');
-                previewImg.src = '';
-                previewVideo.src = '';
-            }, 300);
-            statusDiv.classList.add('hidden');
-        };
+        window.cancelPreview = () => { document.getElementById('file-input').value = ''; document.getElementById('preview-container').classList.add('hidden'); document.getElementById('upload-label').classList.remove('hidden'); };
 
         window.uploadFile = async () => {
-            if (!selectedFile) return;
-            if (!currentUser) {
-                alert("Authentication is required to upload.");
-                return;
+            const file = document.getElementById('file-input').files[0];
+            const title = document.getElementById('upload-title').value.trim();
+            if (!file || !auth.currentUser) return;
+            if (file.size > 15 * 1024 * 1024) { 
+                const stat = document.getElementById('upload-status');
+                stat.innerText = "Error: File exceeds 15MB limit."; 
+                stat.classList.remove('hidden');
+                stat.classList.replace('text-green-400', 'text-red-400');
+                return; 
             }
-            if (selectedFile.size > 15 * 1024 * 1024) { // 15MB limit check
-                alert("File size exceeds 15MB limit. Please choose a smaller file to ensure successful upload.");
-                return;
-            }
-            
-            const confirmBtn = document.getElementById('confirm-upload-btn');
-            const originalBtnText = confirmBtn.textContent;
-            
-            // Set Loading UI
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Uploading...';
-            confirmBtn.classList.add('opacity-50');
-            
-            statusDiv.textContent = "Uploading... Please wait.";
-            statusDiv.classList.remove('hidden', 'text-red-200', 'bg-red-900/50');
-            statusDiv.classList.add('text-green-400', 'bg-green-900/50');
-
+            const btn = document.getElementById('confirm-upload-btn');
+            btn.disabled = true; btn.innerText = "Uploading...";
+            const stat = document.getElementById('upload-status');
+            stat.innerText = "Uploading to infrastructure... please wait."; stat.classList.remove('hidden');
             try {
-                let fileType = 'image';
-                if (selectedFile.type.startsWith('video/')) fileType = 'video';
-                else if (selectedFile.type.includes('pdf')) fileType = 'pdf';
-                else if (selectedFile.type.includes('presentation') || selectedFile.name.endsWith('.ppt') || selectedFile.name.endsWith('.pptx')) fileType = 'ppt';
-                
-                const storageRef = ref(storage, `uploads/${Date.now()}_${selectedFile.name}`);
-                
-                const snapshot = await uploadBytes(storageRef, selectedFile);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-
-                const userTitle = document.getElementById('upload-title').value.trim();
-                const defaultTitle = fileType === 'video' ? "Archive Video" : (fileType === 'pdf' || fileType === 'ppt' ? "Archive Document" : "Archive Image");
-
-                await addDoc(collection(db, 'gallery_items'), {
-                    url: downloadURL,
-                    title: userTitle || defaultTitle,
-                    type: fileType,
-                    timestamp: serverTimestamp(),
-                    uploadedBy: currentUser.uid
-                });
-
-                statusDiv.textContent = "Upload Successful!";
-                setTimeout(() => window.cancelPreview(), 2000);
-
-            } catch (error) {
-                console.error("Upload failed:", error);
-                statusDiv.textContent = `Upload failed: ${error.message}`;
-                statusDiv.classList.remove('text-green-400', 'bg-green-900/50');
-                statusDiv.classList.add('text-red-200', 'bg-red-900/50');
-            } finally {
-                // Reset UI
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = originalBtnText;
-                confirmBtn.classList.remove('opacity-50');
+                let type = 'image';
+                if (file.type.startsWith('video')) type = 'video';
+                else if (file.type.includes('pdf')) type = 'pdf';
+                else if (file.name.match(/\.(ppt|pptx)$/)) type = 'ppt';
+                const sRef = ref(storage, `archive/${Date.now()}_${file.name}`);
+                const snap = await uploadBytes(sRef, file);
+                const url = await getDownloadURL(snap.ref);
+                await addDoc(collection(db, 'gallery_items'), { url, title: title || "Archive Resource", type, timestamp: serverTimestamp(), uid: auth.currentUser.uid });
+                stat.innerText = "Upload Complete!";
+                setTimeout(() => { window.cancelPreview(); stat.classList.add('hidden'); btn.disabled = false; btn.innerText = "Upload"; }, 1500);
+            } catch (err) { 
+                stat.innerText = "Upload failed: " + err.message; 
+                btn.disabled = false; btn.innerText = "Upload"; 
             }
         };
-
-        // --- 7. Scroll Spy (Active Navigation Links) ---
-        const sections = document.querySelectorAll("section[id]");
-        const scrollNavLinks = document.querySelectorAll(".nav-link[href^='#']");
-
-        window.addEventListener("scroll", () => {
-            let current = "";
-            sections.forEach((section) => {
-                const sectionTop = section.offsetTop;
-                // 200px offset accounts for the fixed navbar height
-                if (window.scrollY >= sectionTop - 200) { 
-                    current = section.getAttribute("id");
-                }
-            });
-
-            scrollNavLinks.forEach((link) => {
-                link.classList.remove("active-link");
-                if (link.getAttribute("href") === `#${current}`) {
-                    link.classList.add("active-link");
-                }
-            });
-        });
     </script>
 </body>
 </html>
