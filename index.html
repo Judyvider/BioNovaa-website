@@ -686,8 +686,8 @@
             });
         }, { threshold: 0.5 }); // Triggers when 50% of the goals section is visible
 
-        const impactGoalsSection = document.getElementById('impact-goals');
-        if (impactGoalsSection) counterObserver.observe(impactGoalsSection);
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer) counterObserver.observe(statsContainer);
 
         // --- 3. Mobile Menu Toggle ---
         const mobileMenu = document.getElementById('mobile-menu');
@@ -971,6 +971,28 @@
                 confirmBtn.classList.remove('opacity-50');
             }
         };
+
+        // --- 7. Scroll Spy (Active Navigation Links) ---
+        const sections = document.querySelectorAll("section[id]");
+        const scrollNavLinks = document.querySelectorAll(".nav-link[href^='#']");
+
+        window.addEventListener("scroll", () => {
+            let current = "";
+            sections.forEach((section) => {
+                const sectionTop = section.offsetTop;
+                // 200px offset accounts for the fixed navbar height
+                if (window.scrollY >= sectionTop - 200) { 
+                    current = section.getAttribute("id");
+                }
+            });
+
+            scrollNavLinks.forEach((link) => {
+                link.classList.remove("active-link");
+                if (link.getAttribute("href") === `#${current}`) {
+                    link.classList.add("active-link");
+                }
+            });
+        });
     </script>
 </body>
 </html>
